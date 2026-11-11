@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>科學之王 - 保良局田家炳小學</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background-color: #f0fdf4;
+            user-select: none; /* Prevent text selection during fast taps */
+            overflow: hidden; /* Prevent scrolling */
+            touch-action: manipulation;
+        }
+
+        /* Custom Animations */
+        @keyframes bounce-slight {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-idle { animation: bounce-slight 2s infinite ease-in-out; }
+
+        @keyframes attack-left {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(30px) scale(1.1); }
+            100% { transform: translateX(0); }
+        }
+        .animate-attack-left { animation: attack-left 0.3s ease-out; }
+
+        @keyframes attack-right {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(-30px) scale(1.1); }
+            100% { transform: translateX(0); }
+        }
+        .animate-attack-right { animation: attack-right 0.3s ease-out; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-pop { animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* Fill in the blank underline */
+        .blank-space {
+            display: inline-block;
+            min-width: 80px;
+            border-bottom: 3px solid #333;
+            text-align: center;
+            font-weight: bold;
+            color: #2563eb;
+            padding: 0 8px;
+            margin: 0 4px;
+            line-height: 1.2;
+            vertical-align: baseline;
+        }
+
+        /* Button hover & active states for touch/mouse */
+        .game-btn:active { transform: scale(0.95); }
+        .option-btn.selected {
+            background-color: #fef08a !important;
+            border-color: #eab308 !important;
+            color: #854d0e !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
+        }
+
+        /* Scrollbar for tables */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-50 to-green-200">
+
+    <!-- Container -->
+    <div id="app-container" class="w-full h-full max-w-[1920px] max-h-[1080px] relative shadow-2xl bg-white overflow-hidden flex flex-col">
+        
+        <!-- START SCREEN -->
+        <div id="screen-start" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-blue-100 to-green-100">
+            <div class="animate-bounce mb-4 text-yellow-500 text-7xl"><i class="fa-solid fa-crown"></i></div>
+            <h1 class="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600 mb-4 drop-shadow-lg text-center tracking-wider">
+                科學之王
+            </h1>
+            <h2 class="text-2xl md:text-4xl font-bold text-gray-700 mb-12 flex items-center gap-3">
+                <i class="fa-solid fa-school"></i> 保良局田家炳小學
+            </h2>
+            <div class="flex gap-6 flex-wrap justify-center">
+                <button onclick="showInstructions()" class="game-btn px-8 py-4 bg-purple-500 text-white rounded-full text-2xl font-bold shadow-[0_6px_0_#9333ea] hover:bg-purple-400 transition-all">
+                    <i class="fa-solid fa-book-open mr-2"></i> 遊戲說明
+                </button>
+                <button onclick="startGame()" class="game-btn px-12 py-4 bg-green-500 text-white rounded-full text-3xl font-black shadow-[0_6px_0_#16a34a] hover:bg-green-400 transition-all">
+                    <i class="fa-solid fa-play mr-2"></i> 開始遊戲
+                </button>
+                <button onclick="toggleFullScreen()" class="game-btn px-8 py-4 bg-blue-500 text-white rounded-full text-2xl font-bold shadow-[0_6px_0_#2563eb] hover:bg-blue-400 transition-all">
+                    <i class="fa-solid fa-expand mr-2"></i> 全屏顯示
+                </button>
+            </div>
+        </div>
+
+        <!-- INSTRUCTIONS SCREEN -->
+        <div id="screen-instructions" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 to-purple-100 p-8">
+            <div class="bg-white rounded-3xl p-8 max-w-4xl w-full shadow-2xl border-4 border-purple-200">
+                <h2 class="text-4xl font-black text-center text-purple-600 mb-6 border-b-4 border-purple-100 pb-4">📝 遊戲說明</h2>
+                <ul class="text-xl space-y-4 text-gray-700 font-bold mb-8">
+                    <li class="flex items-start gap-3"><i class="fa-solid fa-user-group text-blue-500 mt-1"></i> <span>這是一個雙人對戰遊戲，左邊是「騎士」，右邊是「法師」。</span></li>
+                    <li class="flex items-start gap-3"><i class="fa-solid fa-clock text-red-500 mt-1"></i> <span>遊戲限時 <b>90秒</b>，爭取最高分數！</span></li>
+                    <li class="flex items-start gap-3"><i class="fa-solid fa-check-circle text-green-500 mt-1"></i> <span>先點選正確的詞語，填入空格，確認無誤後按「確定」提交。按「取消」可重選。</span></li>
+                    <li class="flex items-start gap-3"><i class="fa-solid fa-hand-fist text-orange-500 mt-1"></i> <span>答對即可攻擊怪獸！連續答對 3 題 (Combo) 會大幅提升攻擊力！</span></li>
+                    <li class="flex items-start gap-3"><i class="fa-solid fa-triangle-exclamation text-yellow-500 mt-1"></i> <span>答錯會被暫停 3 秒，並需要重新嘗試同一題。</span></li>
+                    <li class="flex items-start gap-3"><i class="fa-solid fa-crown text-yellow-500 mt-1"></i> <span>時間結束時，分數最高的一方將成為「科學之王」！</span></li>
+                </ul>
+                <div class="text-center">
+                    <button onclick="backToMain()" class="game-btn px-10 py-3 bg-gray-500 text-white rounded-full text-2xl font-bold shadow-[0_6px_0_#4b5563] hover:bg-gray-400 transition-all">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> 返回主目錄
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="screen-game" class="hidden flex-1 flex flex-col w-full h-full relative">
+            <!-- Top HUD -->
+            <div class="h-20 bg-gray-900 text-white flex items-center justify-between px-6 shadow-md z-10">
+                <button onclick="confirmBackToMain()" class="game-btn bg-red-500 hover:bg-red-400 px-4 py-2 rounded-xl font-bold text-lg">
+                    <i class="fa-solid fa-house"></i> 退出
+                </button>
+                
+                <div class="flex flex-col items-center">
+                    <div class="text-sm font-bold text-gray-300">剩餘時間</div>
+                    <div id="timer-display" class="text-4xl font-black tracking-widest text-green-400">01:30</div>
+                </div>
+
+                <button onclick="toggleFullScreen()" class="game-btn bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-xl font-bold text-lg">
+                    <i class="fa-solid fa-expand"></i> 全屏
+                </button>
+            </div>
+
+            <!-- Split Screen Battle Area -->
+            <div class="flex-1 flex flex-row w-full overflow-hidden relative">
+                
+                <!-- Divider -->
+                <div class="absolute inset-y-0 left-1/2 w-2 bg-gray-900 z-20 transform -translate-x-1/2 border-x border-gray-700"></div>
+
+                <!-- PLAYER 1 (Knight - Left) -->
+                <div id="p1-area" class="w-1/2 h-full bg-blue-50 flex flex-col relative p-4 border-r-4 border-blue-200">
+                    <!-- Pause Overlay -->
+                    <div id="p1-pause-overlay" class="hidden absolute inset-0 bg-red-900/60 z-30 flex flex-col items-center justify-center backdrop-blur-sm">
+                        <i class="fa-solid fa-xmark text-9xl text-red-500 drop-shadow-[0_0_15px_rgba(0,0,0,1)]"></i>
+                        <h2 class="text-white text-5xl font-black mt-4 drop-shadow-lg">答錯了！</h2>
+                        <h3 class="text-white text-3xl font-bold mt-2 drop-shadow-lg">暫停 <span id="p1-pause-timer">3</span> 秒</h3>
+                    </div>
+
+                    <!-- Stats Header -->
+                    <div class="flex justify-between items-start bg-white/80 p-3 rounded-2xl shadow-sm mb-2 border-2 border-blue-200">
+                        <div>
+                            <div class="text-blue-800 font-black text-2xl"><i class="fa-solid fa-chess-knight"></i> 騎士</div>
+                            <div class="text-gray-600 font-bold">HP: <span id="p1-hp" class="text-green-600">100</span>/100</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-gray-500 font-bold">分數</div>
+                            <div id="p1-score" class="text-4xl font-black text-blue-600 leading-none">0</div>
+                            <div id="p1-combo-container" class="hidden text-orange-500 font-black text-lg animate-pulse">
+                                <i class="fa-solid fa-fire"></i> <span id="p1-combo">0</span> Combo!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Battle Scene -->
+                    <div class="h-48 rounded-2xl bg-gradient-to-b from-blue-200 to-blue-300 relative mb-2 flex items-center justify-between px-8 border-4 border-blue-400 overflow-hidden shadow-inner">
+                        <!-- Knight -->
+                        <div id="p1-sprite" class="text-7xl text-blue-800 animate-idle drop-shadow-lg"><i class="fa-solid fa-chess-knight"></i></div>
+                        <!-- Monster -->
+                        <div class="flex flex-col items-center">
+                            <!-- Monster HP Bar -->
+                            <div class="w-24 h-4 bg-gray-800 rounded-full overflow-hidden border-2 border-gray-900 mb-2">
+                                <div id="p1-monster-hp-bar" class="h-full bg-red-500 transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                            <div id="p1-monster-sprite" class="text-7xl text-red-600 animate-idle drop-shadow-lg"><i class="fa-solid fa-dragon"></i></div>
+                        </div>
+                        <!-- Damage Text (Absolute) -->
+                        <div id="p1-dmg-text" class="absolute right-12 top-10 text-4xl font-black text-red-600 drop-shadow-[0_2px_2px_white] opacity-0 transition-opacity"></div>
+                    </div>
+
+                    <!-- Question Area -->
+                    <div class="flex-1 bg-white rounded-3xl p-4 md:p-6 shadow-lg border-4 border-blue-200 flex flex-col justify-between">
+                        <div class="min-h-[100px] flex items-center justify-center w-full">
+                            <div id="p1-question-text" class="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed text-center w-full" style="word-break: break-word;">
+                                題目載入中...
+                            </div>
+                        </div>
+                        
+                        <div id="p1-options" class="grid grid-cols-2 gap-3 md:gap-4 mt-4">
+                            <!-- Options injected by JS -->
+                        </div>
+
+                        <div class="flex gap-4 mt-4 h-16">
+                            <button onclick="cancelAnswer(1)" id="p1-btn-cancel" class="game-btn flex-1 bg-gray-200 text-gray-600 font-bold rounded-2xl text-2xl border-b-4 border-gray-300 opacity-50 cursor-not-allowed pointer-events-none transition-all">
+                                取消
+                            </button>
+                            <button onclick="confirmAnswer(1)" id="p1-btn-confirm" class="game-btn flex-1 bg-green-200 text-green-700 font-bold rounded-2xl text-2xl border-b-4 border-green-300 opacity-50 cursor-not-allowed pointer-events-none transition-all">
+                                確定
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PLAYER 2 (Mage - Right) -->
+                <div id="p2-area" class="w-1/2 h-full bg-purple-50 flex flex-col relative p-4 border-l-4 border-purple-200">
+                    <!-- Pause Overlay -->
+                    <div id="p2-pause-overlay" class="hidden absolute inset-0 bg-red-900/60 z-30 flex flex-col items-center justify-center backdrop-blur-sm">
+                        <i class="fa-solid fa-xmark text-9xl text-red-500 drop-shadow-[0_0_15px_rgba(0,0,0,1)]"></i>
+                        <h2 class="text-white text-5xl font-black mt-4 drop-shadow-lg">答錯了！</h2>
+                        <h3 class="text-white text-3xl font-bold mt-2 drop-shadow-lg">暫停 <span id="p2-pause-timer">3</span> 秒</h3>
+                    </div>
+
+                    <!-- Stats Header -->
+                    <div class="flex justify-between items-start bg-white/80 p-3 rounded-2xl shadow-sm mb-2 border-2 border-purple-200">
+                        <div>
+                            <div class="text-purple-800 font-black text-2xl"><i class="fa-solid fa-hat-wizard"></i> 法師</div>
+                            <div class="text-gray-600 font-bold">HP: <span id="p2-hp" class="text-green-600">100</span>/100</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-gray-500 font-bold">分數</div>
+                            <div id="p2-score" class="text-4xl font-black text-purple-600 leading-none">0</div>
+                            <div id="p2-combo-container" class="hidden text-orange-500 font-black text-lg animate-pulse">
+                                <i class="fa-solid fa-fire"></i> <span id="p2-combo">0</span> Combo!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Battle Scene -->
+                    <div class="h-48 rounded-2xl bg-gradient-to-b from-purple-200 to-purple-300 relative mb-2 flex items-center justify-between px-8 border-4 border-purple-400 overflow-hidden shadow-inner flex-row-reverse">
+                        <!-- Mage -->
+                        <div id="p2-sprite" class="text-7xl text-purple-800 animate-idle drop-shadow-lg"><i class="fa-solid fa-hat-wizard"></i></div>
+                        <!-- Monster -->
+                        <div class="flex flex-col items-center">
+                            <!-- Monster HP Bar -->
+                            <div class="w-24 h-4 bg-gray-800 rounded-full overflow-hidden border-2 border-gray-900 mb-2">
+                                <div id="p2-monster-hp-bar" class="h-full bg-red-500 transition-all duration-300" style="width: 100%"></div>
+                            </div>
+                            <div id="p2-monster-sprite" class="text-7xl text-indigo-900 animate-idle drop-shadow-lg" style="transform: scaleX(-1);"><i class="fa-solid fa-ghost"></i></div>
+                        </div>
+                        <!-- Damage Text -->
+                        <div id="p2-dmg-text" class="absolute left-12 top-10 text-4xl font-black text-red-600 drop-shadow-[0_2px_2px_white] opacity-0 transition-opacity"></div>
+                    </div>
+
+                    <!-- Question Area -->
+                    <div class="flex-1 bg-white rounded-3xl p-4 md:p-6 shadow-lg border-4 border-purple-200 flex flex-col justify-between">
+                        <div class="min-h-[100px] flex items-center justify-center w-full">
+                            <div id="p2-question-text" class="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed text-center w-full" style="word-break: break-word;">
+                                題目載入中...
+                            </div>
+                        </div>
+                        
+                        <div id="p2-options" class="grid grid-cols-2 gap-3 md:gap-4 mt-4">
+                            <!-- Options injected by JS -->
+                        </div>
+
+                        <div class="flex gap-4 mt-4 h-16">
+                            <button onclick="cancelAnswer(2)" id="p2-btn-cancel" class="game-btn flex-1 bg-gray-200 text-gray-600 font-bold rounded-2xl text-2xl border-b-4 border-gray-300 opacity-50 cursor-not-allowed pointer-events-none transition-all">
+                                取消
+                            </button>
+                            <button onclick="confirmAnswer(2)" id="p2-btn-confirm" class="game-btn flex-1 bg-green-200 text-green-700 font-bold rounded-2xl text-2xl border-b-4 border-green-300 opacity-50 cursor-not-allowed pointer-events-none transition-all">
+                                確定
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- END SCREEN -->
+        <div id="screen-end" class="hidden absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-yellow-100 to-orange-100 p-8 overflow-y-auto">
+            
+            <div id="winner-crown" class="hidden text-8xl text-yellow-500 animate-pop mb-4 drop-shadow-lg"><i class="fa-solid fa-crown"></i></div>
+            
+            <h1 id="winner-title" class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 mb-8 drop-shadow-md text-center">
+                比賽結束！
+            </h1>
+
+            <div class="flex gap-10 mb-8">
+                <!-- P1 Score Box -->
+                <div id="p1-final-box" class="bg-blue-100 border-4 border-blue-300 rounded-3xl p-6 text-center w-64 shadow-xl">
+                    <h3 class="text-2xl font-bold text-blue-800 mb-2"><i class="fa-solid fa-chess-knight"></i> 騎士</h3>
+                    <div id="p1-final-score" class="text-5xl font-black text-blue-600">0</div>
+                    <div class="text-lg font-bold text-gray-600 mt-2">分</div>
+                </div>
+                <!-- P2 Score Box -->
+                <div id="p2-final-box" class="bg-purple-100 border-4 border-purple-300 rounded-3xl p-6 text-center w-64 shadow-xl">
+                    <h3 class="text-2xl font-bold text-purple-800 mb-2"><i class="fa-solid fa-hat-wizard"></i> 法師</h3>
+                    <div id="p2-final-score" class="text-5xl font-black text-purple-600">0</div>
+                    <div class="text-lg font-bold text-gray-600 mt-2">分</div>
+                </div>
+            </div>
+
+            <!-- Missed Questions Log -->
+            <div class="w-full max-w-5xl bg-white rounded-3xl shadow-xl border-4 border-yellow-300 flex flex-col max-h-[40vh] overflow-hidden mb-8">
+                <div class="bg-yellow-100 py-3 text-center border-b-2 border-yellow-200">
+                    <h3 class="text-2xl font-bold text-yellow-800"><i class="fa-solid fa-clipboard-list"></i> 錯題記錄與解說</h3>
+                </div>
+                <div class="overflow-y-auto p-4 flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700 text-lg">
+                                <th class="p-3 border-b-2 font-bold w-1/2">題目</th>
+                                <th class="p-3 border-b-2 font-bold text-green-600 w-1/6">正確答案</th>
+                                <th class="p-3 border-b-2 font-bold text-blue-600 w-1/3">解說</th>
+                            </tr>
+                        </thead>
+                        <tbody id="missed-questions-body">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                    <div id="no-missed-msg" class="hidden text-center text-gray-500 font-bold py-6 text-xl">
+                        太棒了！沒有答錯任何題目！🎉
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="backToMain()" class="game-btn px-10 py-4 bg-gray-600 text-white rounded-full text-2xl font-bold shadow-[0_6px_0_#4b5563] hover:bg-gray-500 transition-all">
+                    返回主目錄
+                </button>
+                <button onclick="startGame()" class="game-btn px-10 py-4 bg-green-500 text-white rounded-full text-2xl font-bold shadow-[0_6px_0_#16a34a] hover:bg-green-400 transition-all">
+                    再玩一次
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal (replaces alert) -->
+    <div id="alert-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl transform scale-100 transition-transform border-4 border-gray-200">
+            <h3 id="alert-title" class="text-3xl font-black text-gray-800 mb-4">提示</h3>
+            <p id="alert-msg" class="text-xl font-bold text-gray-600 mb-8">確定要退出遊戲嗎？</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="closeAlert()" class="flex-1 py-3 bg-gray-300 text-gray-700 rounded-xl font-bold text-xl hover:bg-gray-400">取消</button>
+                <button id="alert-confirm-btn" class="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold text-xl hover:bg-red-400 shadow-[0_4px_0_#b91c1c]">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Question Database ---
+        const questionDB = [
+            // 1. 生物和非生物
+            { type: 'fill', text: '動物和植物有生命，是______。', answer: '生物', options: ['生物', '死物', '玩具', '石頭'], explanation: '動物和植物都具備生命的特徵，所以稱為生物。' },
+            { type: 'fill', text: '公園設施沒有生命，是______。', answer: '非生物', options: ['非生物', '生物', '動物', '植物'], explanation: '沒有生命的物件統稱為非生物。' },
+            { type: 'fill', text: '生物可以______和繁殖。', answer: '生長', options: ['生長', '縮小', '消失', '飛行'], explanation: '生物需要時間發育變大，這過程稱為生長。' },
+            { type: 'fill', text: '非生物不可以對刺激做出______。', answer: '反應', options: ['反應', '變化', '聲音', '氣味'], explanation: '只有生物才能感知外界刺激並做出反應。' },
+            { type: 'mc', text: '以下哪項是非生物的特性？', answer: '沒有生命', options: ['沒有生命', '可以繁殖', '可以生長', '需要呼吸'], explanation: '非生物不具備生命的任何特徵。' },
+            { type: 'mc', text: '以下哪一項是生物？', answer: '螞蟻', options: ['螞蟻', '玩具車', '石頭', '白雲'], explanation: '螞蟻有生命，會生長和繁殖，所以是生物。' },
+            { type: 'mc', text: '以下哪一項不是生物的特徵？', answer: '不需要呼吸', options: ['不需要呼吸', '需要食物', '會生長', '對刺激有反應'], explanation: '生物都需要呼吸才能維持生命。' },
+            { type: 'fill', text: '玩具狗不會生長，所以它是______。', answer: '非生物', options: ['非生物', '生物', '動物', '植物'], explanation: '玩具狗沒有生命，不具備生物的特徵。' },
+            { type: 'mc', text: '以下哪一項是非生物？', answer: '鉛筆', options: ['鉛筆', '大樹', '蝴蝶', '小狗'], explanation: '鉛筆沒有生命，不會生長或繁殖。' },
+            { type: 'fill', text: '生物需要空氣、______和陽光來維持生命。', answer: '水分', options: ['水分', '泥沙', '玩具', '汽水'], explanation: '水是生命之源，所有生物都需要水。' },
+            { type: 'fill', text: '植物雖然不會走動，但它會生長，所以它是______。', answer: '生物', options: ['生物', '非生物', '死物', '廢物'], explanation: '植物會生長、繁殖和對刺激有反應，因此是生物。' },
+            { type: 'mc', text: '種子發芽長成大樹，這顯示了生物的甚麼特徵？', answer: '會生長', options: ['會生長', '會移動', '會發聲', '沒有生命'], explanation: '從小變大是生物生長的過程。' },
+            { type: 'fill', text: '貓媽媽生下小貓，這是生物的______現象。', answer: '繁殖', options: ['繁殖', '縮小', '死亡', '破壞'], explanation: '生物能產生下一代，使生命延續。' },
+            { type: 'mc', text: '甚麼東西掉在地上不會感覺到痛，因為它沒有生命？', answer: '書本', options: ['書本', '小鳥', '貓咪', '鸚鵡'], explanation: '書本是非生物，對外界刺激沒有反應。' },
+            { type: 'fill', text: '只有______才會對環境變化做出反應。', answer: '生物', options: ['生物', '非生物', '石頭', '玻璃'], explanation: '對刺激產生反應是生物的重要特徵之一。' },
+            { type: 'mc', text: '為什麼機器人不是生物？', answer: '它不會繁殖', options: ['它不會繁殖', '它會發聲', '它會發光', '它會動'], explanation: '機器人雖然能動，但不能自行生長或繁殖。' },
+            { type: 'fill', text: '魚在水中游動尋找食物，證明牠是有生命的______。', answer: '生物', options: ['生物', '非生物', '玩具', '機器'], explanation: '魚需要攝取食物以獲得能量，這是生物的特徵。' },
+
+            // 2. 觀察動物
+            { type: 'fill', text: '不同動物需要不同的食物，以獲取生命過程的______。', answer: '能量', options: ['能量', '空氣', '陽光', '水分'], explanation: '食物能在生物體內轉化為維持生存所需的能量。' },
+            { type: 'fill', text: '綿羊主要吃______。', answer: '草', options: ['草', '肉', '昆蟲', '魚'], explanation: '綿羊是草食性動物，以植物為食。' },
+            { type: 'fill', text: '蜜蜂以______作為主要食物。', answer: '花蜜', options: ['花蜜', '樹葉', '泥土', '小蟲'], explanation: '蜜蜂在花朵間穿梭，採集花蜜作為食物。' },
+            { type: 'fill', text: '遇到危險時，壁虎會脫掉______，分散敵人的注意力。', answer: '尾巴', options: ['尾巴', '腳', '眼睛', '皮膚'], explanation: '這叫「自割」，是壁虎逃避掠食者的一種自衛本能。' },
+            { type: 'fill', text: '動物受刺激時，會做出______以保護自己。', answer: '反應', options: ['反應', '睡覺', '進食', '飲水'], explanation: '動物會對外界危險做出躲避或反擊等反應。' },
+            { type: 'mc', text: '哪種動物主要在天空活動？', answer: '燕子', options: ['燕子', '蚯蚓', '老虎', '鯊魚'], explanation: '燕子長有翅膀，能在空中飛行。' },
+            { type: 'fill', text: '蜘蛛會結網來捕捉______作為食物。', answer: '昆蟲', options: ['昆蟲', '樹葉', '泥土', '果實'], explanation: '蜘蛛利用蜘蛛網黏住飛過的昆蟲。' },
+            { type: 'mc', text: '甚麼動物用鰓在水裏呼吸？', answer: '金魚', options: ['金魚', '小狗', '麻雀', '小貓'], explanation: '魚類用鰓呼吸水中的氧氣。' },
+            { type: 'fill', text: '青蛙的後腿粗壯，擅長______。', answer: '跳躍', options: ['跳躍', '飛行', '跑步', '攀爬'], explanation: '青蛙發達的後腿能幫助牠們跳得很遠。' },
+            { type: 'mc', text: '長頸鹿的長脖子有甚麼主要作用？', answer: '吃高處的樹葉', options: ['吃高處的樹葉', '喝水', '攻擊敵人', '睡覺'], explanation: '長頸鹿藉著長脖子能吃到高樹上的葉子。' },
+            { type: 'fill', text: '蝸牛背着硬硬的______，遇到危險時會縮進去。', answer: '殼', options: ['殼', '葉', '石頭', '草'], explanation: '蝸牛殼能保護牠柔軟的身體。' },
+            { type: 'mc', text: '以下哪種動物是肉食性的？', answer: '獅子', options: ['獅子', '兔子', '斑馬', '綿羊'], explanation: '獅子以捕獵其他動物為食。' },
+            { type: 'fill', text: '蝴蝶的幼蟲是______，牠們長大後會化蛹。', answer: '毛蟲', options: ['毛蟲', '蝌蚪', '孑孓', '蜘蛛'], explanation: '蝴蝶的成長過程包括卵、幼蟲(毛蟲)、蛹和成蟲。' },
+            { type: 'mc', text: '大象用甚麼器官來捲取食物和水？', answer: '長鼻子', options: ['長鼻子', '尾巴', '耳朵', '牙齒'], explanation: '大象的長鼻子非常靈活，能像手一樣工作。' },
+            { type: 'fill', text: '烏龜遇到敵人時，會把頭和四肢縮進______裏。', answer: '龜殼', options: ['龜殼', '泥洞', '樹上', '水中'], explanation: '龜殼堅硬，是烏龜防禦敵人的好工具。' },
+            { type: 'mc', text: '哪種動物的身體表面長有羽毛？', answer: '鸚鵡', options: ['鸚鵡', '青蛙', '鱷魚', '老鼠'], explanation: '鳥類(如鸚鵡)的特徵之一是身上有羽毛。' },
+            { type: 'fill', text: '老虎身上有條紋，這可以幫助牠們在草叢中______。', answer: '隱蔽', options: ['隱蔽', '飛行', '唱歌', '睡覺'], explanation: '動物的花紋有時能發揮保護色的作用，方便狩獵。' },
+            { type: 'mc', text: '下列哪種動物在冬天會冬眠？', answer: '蛇', options: ['蛇', '猴子', '長頸鹿', '斑馬'], explanation: '蛇是變溫動物，冬天時會躲起來冬眠減少消耗。' },
+            { type: 'fill', text: '蝙蝠通常在______出來活動和覓食。', answer: '夜晚', options: ['夜晚', '中午', '早上', '下午'], explanation: '蝙蝠是夜行性動物，白天休息，晚上活動。' },
+            { type: 'mc', text: '兔子最顯著的特徵是甚麼？', answer: '長長的耳朵', options: ['長長的耳朵', '長長的尾巴', '鋒利的牙齒', '堅硬的鱗片'], explanation: '兔子的長耳朵有助於聽見遠處的聲音，防範危險。' },
+
+            // 3. 動手種植物
+            { type: 'fill', text: '植物可以分為根、______和葉三個主要部分。', answer: '莖', options: ['莖', '花', '果實', '種子'], explanation: '根、莖、葉是多數植物的基本營養器官。' },
+            { type: 'fill', text: '根能夠______植物，讓植物不容易被風吹倒。', answer: '固定', options: ['固定', '移動', '拔起', '搖晃'], explanation: '根深深扎入泥土，起到穩固植物的作用。' },
+            { type: 'fill', text: '莖具有______植物的功能。', answer: '支撐', options: ['支撐', '破壞', '吸收', '呼吸'], explanation: '莖負責支撐葉片和花朵，使其能接觸更多陽光。' },
+            { type: 'fill', text: '莖具有______水和養分的功能。', answer: '輸送', options: ['輸送', '製造', '排泄', '燃燒'], explanation: '莖內有導管，負責將根部吸收的水分送到葉片。' },
+            { type: 'fill', text: '綠豆幼苗發芽後，首先會長出______。', answer: '根', options: ['根', '葉', '莖', '花'], explanation: '種子發芽時，最先突破種皮的是根，以吸收水分。' },
+            { type: 'fill', text: '綠豆幼苗會向着______生長。', answer: '陽光', options: ['陽光', '陰暗', '石頭', '地底'], explanation: '植物具有向光性，會朝光源方向生長以進行光合作用。' },
+            { type: 'fill', text: '植物需要陽光、空氣和水以提供生命過程所需的______。', answer: '能量', options: ['能量', '泥土', '化肥', '保溫'], explanation: '植物透過光合作用，將陽光、水和二氧化碳轉化為能量。' },
+            { type: 'mc', text: '植物的哪個部分通常生長在泥土裏？', answer: '根', options: ['根', '莖', '葉', '花'], explanation: '根部向地底生長，負責吸收水分和養分。' },
+            { type: 'fill', text: '植物的______能吸收陽光，幫助製造食物。', answer: '葉', options: ['葉', '根', '樹皮', '花瓣'], explanation: '葉片含有葉綠素，能進行光合作用製造養料。' },
+            { type: 'mc', text: '仙人掌的葉子變成刺狀，主要目的是甚麼？', answer: '減少水分流失', options: ['減少水分流失', '吸引昆蟲', '讓自己更好看', '增加呼吸'], explanation: '沙漠乾旱，刺狀葉能防止水分散失。' },
+            { type: 'fill', text: '大多數植物需要泥土、空氣、陽光和______才能生長。', answer: '水分', options: ['水分', '汽水', '牛奶', '果汁'], explanation: '水是植物生長不可或缺的條件。' },
+            { type: 'mc', text: '哪種植物通常生長在水中？', answer: '蓮花', options: ['蓮花', '玫瑰', '仙人掌', '菊花'], explanation: '蓮花是水生植物，生長在池塘或湖泊中。' },
+            { type: 'fill', text: '植物開花後，有機會結出______，裏面藏着種子。', answer: '果實', options: ['果實', '樹根', '葉子', '枝條'], explanation: '花朵凋謝後，子房會發育成果實。' },
+            { type: 'mc', text: '如果把植物長時間放在黑暗的紙箱裏，它會怎樣？', answer: '變黃枯萎', options: ['變黃枯萎', '長得更好', '開出大花', '結出果實'], explanation: '植物缺乏陽光無法製造食物，會逐漸枯死。' },
+            { type: 'fill', text: '農夫把______播在泥土裏，期待它們發芽。', answer: '種子', options: ['種子', '石頭', '枯葉', '紙碎'], explanation: '種子是植物繁殖的重要部分。' },
+            { type: 'mc', text: '泥土為植物提供了甚麼？', answer: '養分和固定', options: ['養分和固定', '陽光', '空氣', '溫度'], explanation: '泥土裏有礦物質，同時能讓植物的根部抓緊。' },
+            { type: 'fill', text: '我們應該定期為盆栽______，讓它有足夠水分。', answer: '澆水', options: ['澆水', '拔葉', '噴漆', '加熱'], explanation: '適量澆水能保持植物健康生長。' },
+            { type: 'mc', text: '春天到了，很多植物的枝條會長出甚麼？', answer: '新芽', options: ['新芽', '雪花', '冰塊', '枯葉'], explanation: '春天氣候溫暖，適合植物萌發新芽。' },
+            { type: 'fill', text: '樹木的______很粗壯，叫做樹幹。', answer: '莖', options: ['莖', '根', '花', '果實'], explanation: '木本植物的莖通常很堅硬，用來支撐龐大的樹冠。' },
+            { type: 'mc', text: '如果植物幾天沒有喝水，它的葉子會怎樣？', answer: '下垂枯萎', options: ['下垂枯萎', '變成藍色', '變得更綠', '發光'], explanation: '植物缺水時，細胞會失去水分而使葉片萎蔫。' },
+            { type: 'fill', text: '牽牛花的莖比較軟，會______在其他物體上生長。', answer: '攀爬', options: ['攀爬', '鑽地', '飛行', '游泳'], explanation: '攀緣植物會依附着欄杆或樹幹向上生長，爭取陽光。' },
+
+            // 4. 愛護環境
+            { type: 'fill', text: '輪船漏出的______是一種水污染來源。', answer: '燃油', options: ['燃油', '食物', '泥沙', '雨水'], explanation: '燃油會在水面形成油膜，嚴重破壞海洋生態。' },
+            { type: 'fill', text: '人們在海灘留下的______會造成水污染。', answer: '垃圾', options: ['垃圾', '貝殼', '沙子', '海草'], explanation: '人為棄置的廢物會污染環境，危害海洋生物。' },
+            { type: 'fill', text: '工業活動產生的______會流入河流，影響海洋動物。', answer: '污水', options: ['污水', '蒸氣', '氧氣', '食鹽'], explanation: '未經處理的工業污水含有毒物質。' },
+            { type: 'fill', text: '垃圾長期淤塞______，會滋生細菌，造成衞生問題。', answer: '河道', options: ['河道', '天空', '牆壁', '操場'], explanation: '河道堵塞會導致水流停滯，容易滋生蚊蟲和細菌。' },
+            { type: 'fill', text: '在郊外燒烤後不熄滅火種，可能會引致______。', answer: '山火', options: ['山火', '水浸', '地震', '颱風'], explanation: '未熄滅的火種容易點燃乾草，引發嚴重的山林大火。' },
+            { type: 'fill', text: '空氣污濁會令蜜蜂聞不到花朵的香氣，找不到______。', answer: '花蜜', options: ['花蜜', '同伴', '蜂巢', '敵人'], explanation: '空氣污染物會干擾蜜蜂的嗅覺，影響其覓食。' },
+            { type: 'fill', text: '如果海鳥身上沾滿漏出的燃油，會無法______和捕食。', answer: '飛行', options: ['飛行', '呼吸', '睡覺', '飲水'], explanation: '燃油會令羽毛失去防水和保溫功能，使其變得沉重無法飛行。' },
+            { type: 'fill', text: '人類進食了受污染的______可能會導致食物中毒。', answer: '海產', options: ['海產', '空氣', '泥土', '木材'], explanation: '污染物會在海洋生物體內累積，人類食用後會影響健康。' },
+            { type: 'mc', text: '為了保護環境，我們去超市應該自備甚麼？', answer: '環保袋', options: ['環保袋', '膠袋', '泥土', '玩具'], explanation: '使用環保袋可以減少消耗塑膠袋。' },
+            { type: 'fill', text: '在公園裏，我們把垃圾丟進______，保持環境清潔。', answer: '垃圾桶', options: ['垃圾桶', '草叢', '水池', '滑梯'], explanation: '亂拋垃圾會破壞環境衞生。' },
+            { type: 'mc', text: '以下哪項行為會嚴重破壞環境？', answer: '亂拋垃圾', options: ['亂拋垃圾', '植樹', '關掉不用的燈', '雙面用紙'], explanation: '垃圾會造成土地和水源污染。' },
+            { type: 'fill', text: '汽車排出的______會造成空氣污染。', answer: '廢氣', options: ['廢氣', '水蒸氣', '氧氣', '花香'], explanation: '汽車廢氣中含有害物質，影響我們的健康。' },
+            { type: 'mc', text: '我們可以把廢紙放進哪種顏色的回收箱？', answer: '藍色', options: ['藍色', '黃色', '啡色', '綠色'], explanation: '「藍廢紙」是香港常見的回收分類口訣。' },
+            { type: 'fill', text: '鋁罐可以放進______色的回收箱進行回收。', answer: '黃', options: ['黃', '藍', '啡', '黑'], explanation: '「黃鋁罐」專門收集金屬物品。' },
+            { type: 'mc', text: '飲完的膠樽應該放進甚麼顏色的回收箱？', answer: '啡色', options: ['啡色', '藍色', '黃色', '紅色'], explanation: '「啡膠樽」用來收集塑膠廢物。' },
+            { type: 'fill', text: '節約______是愛護地球的表現，刷牙時應關掉水龍頭。', answer: '用水', options: ['用水', '用紙', '買玩具', '睡覺'], explanation: '食水資源珍貴，我們不應浪費。' },
+            { type: 'mc', text: '如果海邊有很多垃圾，誰會受害最深？', answer: '海洋生物', options: ['海洋生物', '天上的雲', '太陽', '大廈'], explanation: '海洋生物可能會誤食垃圾或被垃圾纏住。' },
+            { type: 'fill', text: '廢物______可以減少垃圾量，並循環再造成新產品。', answer: '回收', options: ['回收', '燃燒', '掩埋', '丟棄'], explanation: '分類回收是減少固體廢物的有效方法。' },
+            { type: 'mc', text: '離開課室前，我們應該怎麼做來節約能源？', answer: '關燈和風扇', options: ['關燈和風扇', '打開水龍頭', '開着冷氣', '丟棄書本'], explanation: '關掉不用的電器可以節省電力，減少碳排放。' },
+            { type: 'fill', text: '我們可以用手帕代替______，以減少砍伐樹木。', answer: '紙巾', options: ['紙巾', '毛巾', '抹布', '膠袋'], explanation: '紙巾是用樹木製成的，減少使用可以保護森林。' },
+            { type: 'mc', text: '在郊野公園，我們不應該做甚麼？', answer: '採摘植物', options: ['採摘植物', '在小徑上走', '帶走自己的垃圾', '欣賞風景'], explanation: '我們應該愛護大自然的一草一木。' },
+            { type: 'fill', text: '多乘搭公共______，可以減少汽車廢氣排放。', answer: '交通工具', options: ['交通工具', '直升機', '過山車', '私家車'], explanation: '巴士或地鐵能同時載很多人，比每人開私家車更環保。' }
+        ];
+
+        // --- Game State ---
+        let gameInterval;
+        let timeRemaining = 90;
+        let missedQuestions = [];
+        
+        const monsterIcons = ['fa-dragon', 'fa-ghost', 'fa-spider', 'fa-skull', 'fa-bug', 'fa-disease'];
+
+        const players = {
+            1: { 
+                id: 1, 
+                score: 0, 
+                combo: 0, 
+                hp: 100, 
+                monsterHp: 100, 
+                currentQuestion: null, 
+                selectedAnswer: null,
+                isPaused: false,
+                monsterIcon: 'fa-dragon'
+            },
+            2: { 
+                id: 2, 
+                score: 0, 
+                combo: 0, 
+                hp: 100, 
+                monsterHp: 100, 
+                currentQuestion: null, 
+                selectedAnswer: null,
+                isPaused: false,
+                monsterIcon: 'fa-ghost'
+            }
+        };
+
+        // --- Helper Functions ---
+        function getElement(id) { return document.getElementById(id); }
+        function showScreen(id) {
+            ['screen-start', 'screen-instructions', 'screen-game', 'screen-end'].forEach(sid => {
+                getElement(sid).classList.add('hidden');
+            });
+            getElement(id).classList.remove('hidden');
+        }
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- Navigation ---
+        function showInstructions() { showScreen('screen-instructions'); }
+        function backToMain() { 
+            clearInterval(gameInterval);
+            showScreen('screen-start'); 
+        }
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        function confirmBackToMain() {
+            getElement('alert-title').innerText = '提示';
+            getElement('alert-msg').innerText = '確定要退出遊戲並返回主目錄嗎？';
+            getElement('alert-confirm-btn').onclick = () => {
+                closeAlert();
+                backToMain();
+            };
+            getElement('alert-modal').classList.remove('hidden');
+        }
+        function closeAlert() {
+            getElement('alert-modal').classList.add('hidden');
+        }
+
+        // --- Game Initialization ---
+        function startGame() {
+            // Reset state
+            timeRemaining = 90;
+            missedQuestions = [];
+            
+            [1, 2].forEach(p => {
+                players[p].score = 0;
+                players[p].combo = 0;
+                players[p].hp = 100;
+                players[p].monsterHp = 100;
+                players[p].isPaused = false;
+                players[p].selectedAnswer = null;
+                players[p].monsterIcon = monsterIcons[Math.floor(Math.random() * monsterIcons.length)];
+                updatePlayerUI(p);
+                loadNewQuestion(p);
+            });
+
+            updateTimerUI();
+            showScreen('screen-game');
+
+            clearInterval(gameInterval);
+            gameInterval = setInterval(gameTick, 1000);
+        }
+
+        function gameTick() {
+            timeRemaining--;
+            updateTimerUI();
+
+            // Passive Monster Attack (every 10s roughly, visual only or minor penalty to keep tension)
+            // Decided to keep it simple: player doesn't die, just focus on answering.
+            
+            if (timeRemaining <= 0) {
+                endGame();
+            }
+        }
+
+        function updateTimerUI() {
+            const min = Math.floor(timeRemaining / 60);
+            const sec = timeRemaining % 60;
+            const display = getElement('timer-display');
+            display.innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            
+            if (timeRemaining <= 10) {
+                display.classList.remove('text-green-400');
+                display.classList.add('text-red-500', 'animate-pulse');
+            } else {
+                display.classList.remove('text-red-500', 'animate-pulse');
+                display.classList.add('text-green-400');
+            }
+        }
+
+        // --- Question Logic ---
+        function loadNewQuestion(pNo) {
+            const player = players[pNo];
+            player.selectedAnswer = null;
+            
+            // Pick random question
+            const q = questionDB[Math.floor(Math.random() * questionDB.length)];
+            player.currentQuestion = JSON.parse(JSON.stringify(q)); // Deep copy
+            
+            // Shuffle options
+            player.currentQuestion.options = shuffleArray([...player.currentQuestion.options]);
+            
+            renderQuestionUI(pNo);
+        }
+
+        function renderQuestionUI(pNo) {
+            const player = players[pNo];
+            const q = player.currentQuestion;
+            
+            // Text rendering
+            let displayText = q.text;
+            if (q.text.includes('______')) {
+                const fill = player.selectedAnswer ? player.selectedAnswer : '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+                displayText = q.text.replace('______', `<span class="blank-space">${fill}</span>`);
+            }
+            getElement(`p${pNo}-question-text`).innerHTML = displayText;
+
+            // Options rendering
+            const optionsContainer = getElement(`p${pNo}-options`);
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const isSelected = player.selectedAnswer === opt;
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full py-3 px-2 md:py-4 rounded-xl font-bold text-lg md:text-xl border-2 transition-all shadow-sm ${isSelected ? 'selected' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300'}`;
+                
+                // Number choice 1-4 as requested
+                btn.innerHTML = `<span class="inline-block bg-gray-200 text-gray-600 rounded-full w-8 h-8 text-center leading-8 mr-2 font-black text-sm">${index + 1}</span> ${opt}`;
+                btn.onclick = () => selectOption(pNo, opt);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Action buttons state
+            const btnCancel = getElement(`p${pNo}-btn-cancel`);
+            const btnConfirm = getElement(`p${pNo}-btn-confirm`);
+            
+            if (player.selectedAnswer) {
+                btnCancel.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                btnCancel.classList.add('hover:bg-gray-300');
+                
+                btnConfirm.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                btnConfirm.classList.add('hover:bg-green-300', 'shadow-[0_4px_0_#86efac]');
+            } else {
+                btnCancel.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                btnCancel.classList.remove('hover:bg-gray-300');
+                
+                btnConfirm.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                btnConfirm.classList.remove('hover:bg-green-300', 'shadow-[0_4px_0_#86efac]');
+            }
+        }
+
+        function selectOption(pNo, opt) {
+            if (players[pNo].isPaused) return;
+            players[pNo].selectedAnswer = opt;
+            renderQuestionUI(pNo);
+        }
+
+        function cancelAnswer(pNo) {
+            if (players[pNo].isPaused) return;
+            players[pNo].selectedAnswer = null;
+            renderQuestionUI(pNo);
+        }
+
+        function confirmAnswer(pNo) {
+            const player = players[pNo];
+            if (player.isPaused || !player.selectedAnswer) return;
+
+            const isCorrect = player.selectedAnswer === player.currentQuestion.answer;
+
+            if (isCorrect) {
+                // Correct logic
+                player.combo++;
+                player.score += 10 + (player.combo * 2); // Bonus score for combo
+                
+                // Attack animation and logic
+                triggerAttack(pNo);
+                
+                // Load next question immediately
+                loadNewQuestion(pNo);
+            } else {
+                // Wrong logic
+                player.combo = 0;
+                
+                // Log mistake (avoid dupes)
+                if (!missedQuestions.some(mq => mq.text === player.currentQuestion.text)) {
+                    missedQuestions.push(player.currentQuestion);
+                }
+
+                triggerPausePenalty(pNo);
+            }
+            updatePlayerUI(pNo);
+        }
+
+        // --- Battle & Animations ---
+        function triggerAttack(pNo) {
+            const player = players[pNo];
+            
+            // Sprite Animation
+            const spriteId = `p${pNo}-sprite`;
+            const spriteObj = getElement(spriteId);
+            spriteObj.classList.remove('animate-idle');
+            spriteObj.classList.add(pNo === 1 ? 'animate-attack-left' : 'animate-attack-right');
+            setTimeout(() => {
+                spriteObj.classList.remove(pNo === 1 ? 'animate-attack-left' : 'animate-attack-right');
+                spriteObj.classList.add('animate-idle');
+            }, 300);
+
+            // Calculate Damage
+            const baseDmg = 34; // 3 hits for 100 HP
+            const isCrit = player.combo >= 3;
+            const damage = isCrit ? 50 : baseDmg;
+
+            // Damage Text
+            const dmgText = getElement(`p${pNo}-dmg-text`);
+            dmgText.innerText = `-${damage}`;
+            dmgText.classList.remove('opacity-0');
+            dmgText.classList.add('animate-pop');
+            if (isCrit) {
+                dmgText.innerText = `CRIT! -${damage}`;
+                dmgText.classList.add('text-yellow-400');
+                dmgText.classList.remove('text-red-600');
+            } else {
+                dmgText.classList.remove('text-yellow-400');
+                dmgText.classList.add('text-red-600');
+            }
+            
+            setTimeout(() => {
+                dmgText.classList.add('opacity-0');
+                dmgText.classList.remove('animate-pop');
+            }, 800);
+
+            // Monster HP Logic
+            player.monsterHp -= damage;
+            
+            const monsterSprite = getElement(`p${pNo}-monster-sprite`);
+            monsterSprite.classList.remove('animate-idle');
+            monsterSprite.classList.add('animate-shake');
+            setTimeout(() => monsterSprite.classList.remove('animate-shake'), 400);
+
+            if (player.monsterHp <= 0) {
+                // Defeated Monster
+                player.score += 50; // Bonus for kill
+                player.monsterHp = 100;
+                
+                // Change monster icon
+                player.monsterIcon = monsterIcons[Math.floor(Math.random() * monsterIcons.length)];
+                
+                // Pop animation for new monster
+                monsterSprite.innerHTML = `<i class="fa-solid ${player.monsterIcon}"></i>`;
+                monsterSprite.classList.add('animate-pop');
+                setTimeout(() => {
+                    monsterSprite.classList.remove('animate-pop');
+                    monsterSprite.classList.add('animate-idle');
+                }, 500);
+            }
+            updatePlayerUI(pNo);
+        }
+
+        function triggerPausePenalty(pNo) {
+            const player = players[pNo];
+            player.isPaused = true;
+            player.selectedAnswer = null; // Clear selection to "try again"
+            renderQuestionUI(pNo); // Update UI to remove selection
+
+            const overlay = getElement(`p${pNo}-pause-overlay`);
+            const timerText = getElement(`p${pNo}-pause-timer`);
+            overlay.classList.remove('hidden');
+            
+            let timeLeft = 3;
+            timerText.innerText = timeLeft;
+
+            const penaltyInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    timerText.innerText = timeLeft;
+                } else {
+                    clearInterval(penaltyInterval);
+                    overlay.classList.add('hidden');
+                    player.isPaused = false;
+                }
+            }, 1000);
+        }
+
+        function updatePlayerUI(pNo) {
+            const p = players[pNo];
+            
+            getElement(`p${pNo}-score`).innerText = p.score;
+            // Combo
+            const comboContainer = getElement(`p${pNo}-combo-container`);
+            if (p.combo >= 2) {
+                comboContainer.classList.remove('hidden');
+                getElement(`p${pNo}-combo`).innerText = p.combo;
+                if (p.combo >= 3) {
+                    comboContainer.classList.add('text-red-500', 'scale-110');
+                    comboContainer.classList.remove('text-orange-500');
+                } else {
+                    comboContainer.classList.remove('text-red-500', 'scale-110');
+                    comboContainer.classList.add('text-orange-500');
+                }
+            } else {
+                comboContainer.classList.add('hidden');
+            }
+
+            // Monster UI
+            getElement(`p${pNo}-monster-hp-bar`).style.width = `${Math.max(0, p.monsterHp)}%`;
+            getElement(`p${pNo}-monster-sprite`).innerHTML = `<i class="fa-solid ${p.monsterIcon}"></i>`;
+        }
+
+        // --- End Game ---
+        function endGame() {
+            clearInterval(gameInterval);
+            
+            const p1Score = players[1].score;
+            const p2Score = players[2].score;
+
+            getElement('p1-final-score').innerText = p1Score;
+            getElement('p2-final-score').innerText = p2Score;
+
+            const title = getElement('winner-title');
+            const crown = getElement('winner-crown');
+            
+            // Highlight Winner
+            getElement('p1-final-box').classList.remove('scale-110', 'border-yellow-400', 'shadow-[0_0_20px_rgba(250,204,21,0.8)]');
+            getElement('p2-final-box').classList.remove('scale-110', 'border-yellow-400', 'shadow-[0_0_20px_rgba(250,204,21,0.8)]');
+            
+            if (p1Score > p2Score) {
+                title.innerText = '騎士 成為 科學之王！';
+                title.className = 'text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-400 mb-8 drop-shadow-md text-center';
+                crown.classList.remove('hidden');
+                getElement('p1-final-box').classList.add('scale-110', 'border-yellow-400', 'shadow-[0_0_20px_rgba(250,204,21,0.8)]', 'transition-all');
+            } else if (p2Score > p1Score) {
+                title.innerText = '法師 成為 科學之王！';
+                title.className = 'text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-400 mb-8 drop-shadow-md text-center';
+                crown.classList.remove('hidden');
+                getElement('p2-final-box').classList.add('scale-110', 'border-yellow-400', 'shadow-[0_0_20px_rgba(250,204,21,0.8)]', 'transition-all');
+            } else {
+                title.innerText = '平局！雙方都是科學之王！';
+                title.className = 'text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-orange-500 mb-8 drop-shadow-md text-center';
+                crown.classList.remove('hidden');
+            }
+
+            // Populate Missed Questions
+            const tbody = getElement('missed-questions-body');
+            const noMsg = getElement('no-missed-msg');
+            tbody.innerHTML = '';
+            
+            if (missedQuestions.length === 0) {
+                noMsg.classList.remove('hidden');
+                tbody.parentElement.classList.add('hidden'); // hide table head
+            } else {
+                noMsg.classList.add('hidden');
+                tbody.parentElement.classList.remove('hidden');
+                missedQuestions.forEach(q => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'border-b hover:bg-yellow-50 transition-colors text-lg';
+                    
+                    // Format question text to have the answer filled in for context
+                    const qText = q.text.replace('______', `[${q.answer}]`);
+
+                    tr.innerHTML = `
+                        <td class="p-3 font-bold text-gray-800">${q.text}</td>
+                        <td class="p-3 font-black text-green-600">${q.answer}</td>
+                        <td class="p-3 text-gray-700">${q.explanation}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            showScreen('screen-end');
+        }
+
+    </script>
+</body>
+</html>
